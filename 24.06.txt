@@ -224,16 +224,49 @@ input bool UseFixedLot = false;          // Использовать фикси�
 input double FixedLotSize = 0.1;         // Размер фиксированного лота
 input double LotReductionPercent = 0.0;  // Процент уменьшения лота (0-100)
 
-// Входные параметры для индикаторов
-input group "=== EMA Parameters ==="
-input int EmaShortLength = 20;                          // Период короткой EMA
-input ENUM_APPLIED_PRICE_CUSTOM EmaShortPrice = PRICE_CLOSE_CUSTOM;    // Тип цены для короткой EMA
-input int EmaLongLength = 50;                           // Период длинной EMA
-input ENUM_APPLIED_PRICE_CUSTOM EmaLongPrice = PRICE_CLOSE_CUSTOM;     // Тип цены для длинной EMA
+// Add these new parameters
+input group "=== Moving Average Settings ==="
+input TypeOfMA Type_MA = AMA;  // Type of Moving Average
 
-input group "=== RSI Parameters ==="
-input int RsiLength = 14;          // Период RSI
-input int RsiMiddle = 50;          // Средний уровень RSI
+// Parameters for AMA
+input int AMA_PeriodMA = 14;        // AMA: Period of averaging
+input int AMA_PeriodFast = 2;       // AMA: Period of fast EMA
+input int AMA_PeriodSlow = 30;      // AMA: Period of slow EMA
+input int AMA_Shift = 0;            // AMA: Time shift
+input ENUM_APPLIED_PRICE AMA_Applied = PRICE_CLOSE; // AMA: Price type
+
+// Parameters for DEMA
+input int DEMA_PeriodMA = 28;       // DEMA: Period of averaging
+input int DEMA_Shift = 0;           // DEMA: Time shift
+input ENUM_APPLIED_PRICE DEMA_Applied = PRICE_CLOSE; // DEMA: Price type
+
+// Parameters for FraMA
+input int FraMA_PeriodMA = 16;      // FraMA: Period of averaging
+input int FraMA_Shift = 0;          // FraMA: Time shift
+input ENUM_APPLIED_PRICE FraMA_Applied = PRICE_CLOSE; // FraMA: Price type
+
+// Parameters for MA
+input int MA_PeriodMA = 15;         // MA: Period of averaging
+input int MA_Shift = 0;             // MA: Time shift
+input ENUM_MA_METHOD MA_Method = MODE_SMA; // MA: Method
+input ENUM_APPLIED_PRICE MA_Applied = PRICE_CLOSE; // MA: Price type
+
+// Parameters for TEMA
+input int TEMA_PeriodMA = 44;       // TEMA: Period of averaging
+input int TEMA_Shift = 0;           // TEMA: Time shift
+input ENUM_APPLIED_PRICE TEMA_Applied = PRICE_CLOSE; // TEMA: Price type
+
+// Parameters for VIDYA
+input int VIDYA_InpPeriodCMO = 11;  // VIDYA: Period CMO
+input int VIDYA_InpPeriodEMA = 27;  // VIDYA: Period EMA
+input int VIDYA_InpShift = 0;       // VIDYA: Shift
+input ENUM_APPLIED_PRICE VIDYA_Applied = PRICE_CLOSE; // VIDYA: Price type
+
+// Growth factor
+input double GFactor = 0.0001;      // Growth factor
+
+// Update handles declaration
+int MAHandle;        // Single handle for current MA type
 
 // Параметры торговли
 input group "=== Trade Parameters ==="
@@ -349,15 +382,35 @@ input bool Check_Single_Currency_News = true;
 //+------------------------------------------------------------------+
 int OnInit()
 {
-    // Получение хэндлов индикаторов
-        EmaShortHandle = iMA(_Symbol, PERIOD_CURRENT, EmaShortLength, 0, MODE_EMA, (ENUM_APPLIED_PRICE)EmaShortPrice);
-    EmaLongHandle = iMA(_Symbol, PERIOD_CURRENT, EmaLongLength, 0, MODE_EMA, (ENUM_APPLIED_PRICE)EmaLongPrice);
-    RsiHandle = iRSI(_Symbol, PERIOD_CURRENT, RsiLength, PRICE_CLOSE);
-    
-    if(EmaShortHandle == INVALID_HANDLE || EmaLongHandle == INVALID_HANDLE || 
-       RsiHandle == INVALID_HANDLE)
+    // Initialize MA handle based on selected type
+    switch(Type_MA)
     {
-        Print("Error creating indicators");
+        case AMA:
+            MAHandle = iAMA(_Symbol, PERIOD_CURRENT, AMA_PeriodMA, AMA_PeriodFast, AMA_PeriodSlow, AMA_Shift, AMA_Applied);
+            break;
+        case DEMA:
+            MAHandle = iDEMA(_Symbol, PERIOD_CURRENT, DEMA_PeriodMA, DEMA_Shift, DEMA_Applied);
+            break;
+        case FraMA:
+            MAHandle = iFrAMA(_Symbol, PERIOD_CURRENT, FraMA_PeriodMA, FraMA_Shift, FraMA_Applied);
+            break;
+        case MA:
+            MAHandle = iMA(_Symbol, PERIOD_CURRENT, MA_PeriodMA, MA_Shift, MA_Method, MA_Applied);
+            break;
+        case TEMA:
+            MAHandle = iTEMA(_Symbol, PERIOD_CURRENT, TEMA_PeriodMA, TEMA_Shift, TEMA_Applied);
+            break;
+        case VIDYA:
+            MAHandle = iVIDyA(_Symbol, PERIOD_CURRENT, VIDYA_InpPeriodCMO, VIDYA_InpPeriodEMA, VIDYA_InpShift, VIDYA_Applied);
+            break;
+        case NRMA:
+            MAHandle = iCustom(_Symbol, PERIOD_CURRENT, "Examples\\nrma", NRMA_Method, XLength, XPhase, IPC, Kf, Fast, Sharp, Shift, PriceShift);
+            break;
+    }
+
+    if(MAHandle == INVALID_HANDLE)
+    {
+        Print("Error creating MA indicator");
         return(INIT_FAILED);
     }
     
