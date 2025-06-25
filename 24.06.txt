@@ -217,6 +217,17 @@ enum ENUM_APPLIED_PRICE_CUSTOM  // Перечисление для пользо�
     PRICE_WEIGHTED_CUSTOM = PRICE_WEIGHTED   // Weighted (HLCC/4)
 };
 
+enum TypeOfMA
+{
+    AMA,    // Adaptive Moving Average
+    DEMA,   // Double Exponential Moving Average
+    FraMA,  // Fractal Adaptive Moving Average
+    MA,     // Обычная скользящая средняя
+    TEMA,   // Triple Exponential Moving Average
+    VIDYA,  // Variable Index Dynamic Average
+    NRMA    // Non-Linear Regression Moving Average
+};
+
 // Параметры управления рисками
 input group "=== Risk Management ==="
 input double RiskPercent = 1.0;          // Риск на сделку (в процентах)
@@ -251,6 +262,16 @@ input int MA_Shift = 0;             // MA: Time shift
 input ENUM_MA_METHOD MA_Method = MODE_SMA; // MA: Method
 input ENUM_APPLIED_PRICE MA_Applied = PRICE_CLOSE; // MA: Price type
 
+input ENUM_MA_METHOD NRMA_Method = MODE_SMA;  // NRMA: Метод MA
+input int XLength = 14;                       // NRMA: X Length
+input int XPhase = 15;                        // NRMA: X Phase
+input int IPC = 8;                            // NRMA: IPC
+input double Kf = 1.0;                        // NRMA: Kf
+input int Fast = 4;                           // NRMA: Быстрый период
+input int Sharp = 2;                          // NRMA: Sharp
+input int Shift = 0;                          // NRMA: Сдвиг
+input int PriceShift = 0;                     // NRMA: Сдвиг цены
+
 // Parameters for TEMA
 input int TEMA_PeriodMA = 44;       // TEMA: Period of averaging
 input int TEMA_Shift = 0;           // TEMA: Time shift
@@ -261,6 +282,8 @@ input int VIDYA_InpPeriodCMO = 11;  // VIDYA: Period CMO
 input int VIDYA_InpPeriodEMA = 27;  // VIDYA: Period EMA
 input int VIDYA_InpShift = 0;       // VIDYA: Shift
 input ENUM_APPLIED_PRICE VIDYA_Applied = PRICE_CLOSE; // VIDYA: Price type
+
+input int RsiMiddle = 50; // Средний уровень для RSI
 
 // Growth factor
 input double GFactor = 0.0001;      // Growth factor
@@ -384,29 +407,29 @@ int OnInit()
 {
     // Initialize MA handle based on selected type
     switch(Type_MA)
-    {
-        case AMA:
-            MAHandle = iAMA(_Symbol, PERIOD_CURRENT, AMA_PeriodMA, AMA_PeriodFast, AMA_PeriodSlow, AMA_Shift, AMA_Applied);
-            break;
-        case DEMA:
-            MAHandle = iDEMA(_Symbol, PERIOD_CURRENT, DEMA_PeriodMA, DEMA_Shift, DEMA_Applied);
-            break;
-        case FraMA:
-            MAHandle = iFrAMA(_Symbol, PERIOD_CURRENT, FraMA_PeriodMA, FraMA_Shift, FraMA_Applied);
-            break;
-        case MA:
-            MAHandle = iMA(_Symbol, PERIOD_CURRENT, MA_PeriodMA, MA_Shift, MA_Method, MA_Applied);
-            break;
-        case TEMA:
-            MAHandle = iTEMA(_Symbol, PERIOD_CURRENT, TEMA_PeriodMA, TEMA_Shift, TEMA_Applied);
-            break;
-        case VIDYA:
-            MAHandle = iVIDyA(_Symbol, PERIOD_CURRENT, VIDYA_InpPeriodCMO, VIDYA_InpPeriodEMA, VIDYA_InpShift, VIDYA_Applied);
-            break;
-        case NRMA:
-            MAHandle = iCustom(_Symbol, PERIOD_CURRENT, "Examples\\nrma", NRMA_Method, XLength, XPhase, IPC, Kf, Fast, Sharp, Shift, PriceShift);
-            break;
-    }
+{
+    case AMA:
+        MAHandle = iAMA(_Symbol, PERIOD_CURRENT, AMA_PeriodMA, AMA_PeriodFast, AMA_PeriodSlow, AMA_Shift, AMA_Applied);
+        break;
+    case DEMA:
+        MAHandle = iDEMA(_Symbol, PERIOD_CURRENT, DEMA_PeriodMA, DEMA_Shift, DEMA_Applied);
+        break;
+    case FraMA:
+        MAHandle = iFrAMA(_Symbol, PERIOD_CURRENT, FraMA_PeriodMA, FraMA_Shift, FraMA_Applied);
+        break;
+    case MA:
+        MAHandle = iMA(_Symbol, PERIOD_CURRENT, MA_PeriodMA, MA_Shift, MA_Method, MA_Applied);
+        break;
+    case TEMA:
+        MAHandle = iTEMA(_Symbol, PERIOD_CURRENT, TEMA_PeriodMA, TEMA_Shift, TEMA_Applied);
+        break;
+    case VIDYA:
+        MAHandle = iVIDyA(_Symbol, PERIOD_CURRENT, VIDYA_InpPeriodCMO, VIDYA_InpPeriodEMA, VIDYA_InpShift, VIDYA_Applied);
+        break;
+    case NRMA:
+        MAHandle = iCustom(_Symbol, PERIOD_CURRENT, "Examples\\nrma", NRMA_Method, XLength, XPhase, IPC, Kf, Fast, Sharp, Shift, PriceShift);
+        break;
+}
 
     if(MAHandle == INVALID_HANDLE)
     {
